@@ -1,4 +1,4 @@
-package com.myandroid.sns_project;
+package com.myandroid.sns_project.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,6 +15,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.myandroid.sns_project.R;
 
 public class PasswordResetActivity extends AppCompatActivity {
 
