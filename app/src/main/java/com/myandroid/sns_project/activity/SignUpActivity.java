@@ -18,7 +18,7 @@ import com.myandroid.sns_project.R;
 import com.myandroid.sns_project.activity.LoginActivity;
 import com.myandroid.sns_project.activity.MainActivity;
 
-public class SignUpActivity extends AppCompatActivity {
+public class SignUpActivity extends BasicActivity {
 
     private FirebaseAuth mAuth;
 

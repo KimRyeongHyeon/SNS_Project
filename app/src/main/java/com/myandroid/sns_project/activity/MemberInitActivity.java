@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -40,7 +41,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
-public class MemberInitActivity extends AppCompatActivity {
+public class MemberInitActivity extends BasicActivity {
 
     private static final String TAG = "MemberInitActivity";
     private ImageView profileImageView;
@@ -108,9 +109,6 @@ public class MemberInitActivity extends AppCompatActivity {
                                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                                         1);
                             } else {
-                                ActivityCompat.requestPermissions(MemberInitActivity.this,
-                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                                        1);
                                 startToast("권한을 허용해 주세요.");
                             }
                         } else {
@@ -220,9 +218,7 @@ public class MemberInitActivity extends AppCompatActivity {
             case 0: {
                 if (resultCode == Activity.RESULT_OK) {
                     profilePath = data.getStringExtra("profilePath");
-                    Log.e("로그:", "profilePath:" + profilePath);
-                    Bitmap bmp = BitmapFactory.decodeFile(profilePath);
-                    profileImageView.setImageBitmap(bmp);
+                    Glide.with(this).load(profilePath).centerCrop().override(500).into(profileImageView);
                 }
                 break;
             }

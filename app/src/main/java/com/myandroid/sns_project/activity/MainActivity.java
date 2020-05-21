@@ -1,12 +1,12 @@
 package com.myandroid.sns_project.activity;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,7 +22,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.myandroid.sns_project.R;
 
-public class MainActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class MainActivity extends BasicActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "MainActivity";
 
@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -75,6 +76,22 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                 }
             }
         });
+
+        findViewById(R.id.floatingActionButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+                    case R.id.floatingActionButton:
+                        myStartActivity(WritePostActivity.class);
+                        break;
+                }
+            }
+        });
+
+
+
+
+
 
         //퍼미션
         mLayout = findViewById(R.id.layout_main);

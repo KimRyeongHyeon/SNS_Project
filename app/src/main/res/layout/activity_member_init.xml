@@ -97,6 +97,7 @@
         android:layout_weight="1"
         android:elevation="10dp"
         android:visibility="gone"
+        app:cardBackgroundColor="@color/colorPrimaryDark"
         app:cardCornerRadius="15dp">
 
         <LinearLayout
