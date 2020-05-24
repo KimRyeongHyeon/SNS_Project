@@ -17,11 +17,8 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -30,9 +27,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.myandroid.sns_project.MemberInfo;
 import com.myandroid.sns_project.R;
-import com.myandroid.sns_project.WriteInfo;
+import com.myandroid.sns_project.PostInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,11 +48,14 @@ public class WritePostActivity extends BasicActivity {
     private ImageView selectedImageView;
     private EditText selectedEditText;
 
+    private RelativeLayout loaderLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write_post);
 
+        loaderLayout = findViewById(R.id.loaderLayout);
         parent = findViewById(R.id.contentsLayout);
         buttonsBackgroundLayout = findViewById(R.id.buttonsBackgroundLayout);
 
@@ -180,6 +179,7 @@ public class WritePostActivity extends BasicActivity {
         final String title = ((EditText)findViewById(R.id.titleEditText)).getText().toString();
 
         if(title.length() > 0) {
+            loaderLayout.setVisibility(View.VISIBLE);
             final ArrayList<String> contentsList = new ArrayList<>();
             user = FirebaseAuth.getInstance().getCurrentUser();
             FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -219,8 +219,8 @@ public class WritePostActivity extends BasicActivity {
                                             successCount++;
                                             if(pathList.size() == successCount) {
                                                 //완료
-                                                WriteInfo writeInfo = new WriteInfo(title, contentsList, user.getUid(), new Date());
-                                                storeUpload(documentReference, writeInfo);
+                                                PostInfo postInfo = new PostInfo(title, contentsList, user.getUid(), new Date());
+                                                storeUpload(documentReference, postInfo);
                                                 for(int a = 0; a < contentsList.size(); a++) {
                                                     Log.e("로그", "컨텐츠 : " + contentsList.get(a));
                                                 }
@@ -236,17 +236,22 @@ public class WritePostActivity extends BasicActivity {
                     }
                 }
             }
+            if(pathList.size() == 0) {
+                PostInfo postInfo = new PostInfo(title, contentsList, user.getUid(), new Date());
+                storeUpload(documentReference, postInfo);
+            }
         } else {
             startToast("제목을 입력해주세요.");
         }
     }
 
-    private void storeUpload(DocumentReference documentReference, WriteInfo writeInfo) {
-        documentReference.set(writeInfo)
+    private void storeUpload(DocumentReference documentReference, PostInfo postInfo) {
+        documentReference.set(postInfo)
             .addOnSuccessListener(new OnSuccessListener<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     Log.d(TAG, "DocumentSnapshot successfully written!");
+                    loaderLayout.setVisibility(View.GONE);
                     finish();
                 }
             })
@@ -254,6 +259,7 @@ public class WritePostActivity extends BasicActivity {
                 @Override
                 public void onFailure(@NonNull Exception e) {
                     Log.w(TAG, "Error writing document", e);
+                    loaderLayout.setVisibility(View.GONE);
                 }
             });
     }

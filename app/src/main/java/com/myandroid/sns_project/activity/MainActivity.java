@@ -2,6 +2,9 @@ package com.myandroid.sns_project.activity;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Context;
@@ -20,7 +23,15 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.myandroid.sns_project.PostInfo;
 import com.myandroid.sns_project.R;
+import com.myandroid.sns_project.adapter.GalleryAdapter;
+import com.myandroid.sns_project.adapter.MainAdapter;
+
+import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends BasicActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -36,7 +47,6 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -63,19 +73,48 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
                     }
                 }
             });
+
+            db.collection("posts")
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                ArrayList<PostInfo> postList = new ArrayList<>();
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d(TAG, document.getId() + " => " + document.getData());
+                                    postList.add(new PostInfo(
+                                            document.getData().get("title").toString(),
+                                            (ArrayList<String>) document.getData().get("contents"),
+                                            document.getData().get("publisher").toString(),
+                                            new Date(document.getDate("createdAt").getTime())));
+                                }
+                                RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+                                recyclerView.setHasFixedSize(true);
+                                recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+
+                                RecyclerView.Adapter mAdapter = new MainAdapter(MainActivity.this, postList);
+                                recyclerView.setAdapter(mAdapter);
+                            } else {
+                                Log.d(TAG, "Error getting documents: ", task.getException());
+                            }
+                        }
+                    });
+
+
         }
 
-        findViewById(R.id.logoutButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.logoutButton:
-                        FirebaseAuth.getInstance().signOut();
-                        myStartActivity(SignUpActivity.class);
-                        break;
-                }
-            }
-        });
+//        findViewById(R.id.logoutButton).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                switch (v.getId()) {
+//                    case R.id.logoutButton:
+//                        FirebaseAuth.getInstance().signOut();
+//                        myStartActivity(SignUpActivity.class);
+//                        break;
+//                }
+//            }
+//        });
 
         findViewById(R.id.floatingActionButton).setOnClickListener(new View.OnClickListener() {
             @Override

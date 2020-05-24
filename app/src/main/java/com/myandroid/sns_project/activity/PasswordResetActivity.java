@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -41,15 +42,15 @@ public class PasswordResetActivity extends BasicActivity {
     }
 
     private void send() {
-        String email = ((EditText)findViewById(R.id.emailEditText)).getText().toString();
-
-        if(email.length() > 0) {
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-
-            auth.sendPasswordResetEmail(email)
+        String email = ((EditText) findViewById(R.id.emailEditText)).getText().toString();
+        if (email.length() > 0) {
+            final RelativeLayout loaderLayout = findViewById(R.id.loaderLayout);
+            loaderLayout.setVisibility(View.VISIBLE);
+            mAuth.sendPasswordResetEmail(email)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
+                            loaderLayout.setVisibility(View.GONE);
                             if (task.isSuccessful()) {
                                 startToast("이메일을 보냈습니다.");
                             }
