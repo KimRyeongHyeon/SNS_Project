@@ -27,47 +27,47 @@ public class GalleryActivity extends BasicActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
+
         if (ContextCompat.checkSelfPermission(GalleryActivity.this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
-
+            ActivityCompat.requestPermissions(GalleryActivity.this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    1);
             if (ActivityCompat.shouldShowRequestPermissionRationale(GalleryActivity.this,
                     Manifest.permission.READ_EXTERNAL_STORAGE)) {
 
-                ActivityCompat.requestPermissions(GalleryActivity.this,
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        1);
             } else {
-                startToast("권한을 허용해 주세요.");
+                startToast("권한을 허용해 주세요");
             }
         } else {
             recyclerInit();
         }
     }
 
-    private void recyclerInit() {
-        final int numberOfColumns = 3;
-
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns));
-
-        RecyclerView.Adapter mAdapter = new GalleryAdapter(this, getImagesPath(this));
-        recyclerView.setAdapter(mAdapter);
-    }
-
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case 1: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     recyclerInit();
                 } else {
                     finish();
-                    startToast("권한을 허용해 주세요.");
+                    startToast("권한을 허용해 주세요");
                 }
             }
         }
+    }
+
+    private void recyclerInit(){
+        final int numberOfColumns = 3;
+
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns));
+
+        RecyclerView.Adapter mAdapter = new GalleryAdapter(this, getImagesPath(this));
+        recyclerView.setAdapter(mAdapter);
     }
 
     public ArrayList<String> getImagesPath(Activity activity) {
@@ -79,16 +79,17 @@ public class GalleryActivity extends BasicActivity {
         String[] projection;
 
         Intent intent = getIntent();
-        if(intent.getStringExtra("media").equals("video")) {
+        if(intent.getStringExtra("media").equals("video")){
             uri = android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
             projection = new String[] { MediaStore.MediaColumns.DATA, MediaStore.Video.Media.BUCKET_DISPLAY_NAME };
-        } else {
+        }else{
             uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
             projection = new String[] { MediaStore.MediaColumns.DATA, MediaStore.Images.Media.BUCKET_DISPLAY_NAME };
         }
 
         cursor = activity.getContentResolver().query(uri, projection, null, null, null);
         column_index_data = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+
         while (cursor.moveToNext()) {
             PathOfImage = cursor.getString(column_index_data);
 
@@ -98,6 +99,6 @@ public class GalleryActivity extends BasicActivity {
     }
 
     private void startToast(String msg) {
-        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }

@@ -55,9 +55,9 @@ public class WritePostActivity extends BasicActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write_post);
 
-        loaderLayout = findViewById(R.id.loaderLayout);
         parent = findViewById(R.id.contentsLayout);
         buttonsBackgroundLayout = findViewById(R.id.buttonsBackgroundLayout);
+        loaderLayout = findViewById(R.id.loaderLayout);
 
         buttonsBackgroundLayout.setOnClickListener(onClickListener);
         findViewById(R.id.check).setOnClickListener(onClickListener);
@@ -70,7 +70,7 @@ public class WritePostActivity extends BasicActivity {
         findViewById(R.id.titleEditText).setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if(hasFocus) {
+                if(hasFocus){
                     selectedEditText = null;
                 }
             }
@@ -78,7 +78,7 @@ public class WritePostActivity extends BasicActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
             case 0:
@@ -92,11 +92,11 @@ public class WritePostActivity extends BasicActivity {
                     linearLayout.setLayoutParams(layoutParams);
                     linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-                    if(selectedEditText == null) {
+                    if(selectedEditText == null){
                         parent.addView(linearLayout);
-                    } else {
-                        for(int i = 0; i < parent.getChildCount(); i++) {
-                            if(parent.getChildAt(i) == selectedEditText.getParent()) {
+                    }else{
+                        for(int i = 0; i < parent.getChildCount(); i++){
+                            if(parent.getChildAt(i) == selectedEditText.getParent()){
                                 parent.addView(linearLayout, i + 1);
                                 break;
                             }
@@ -118,11 +118,11 @@ public class WritePostActivity extends BasicActivity {
                     EditText editText = new EditText(WritePostActivity.this);
                     editText.setLayoutParams(layoutParams);
                     editText.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_CLASS_TEXT);
+                    editText.setHint("내용");
                     editText.setOnFocusChangeListener(onFocusChangeListener);
                     linearLayout.addView(editText);
                 }
                 break;
-
             case 1:
                 if (resultCode == Activity.RESULT_OK) {
                     String profilePath = data.getStringExtra("profilePath");
@@ -135,7 +135,7 @@ public class WritePostActivity extends BasicActivity {
     View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            switch (v.getId()) {
+            switch (v.getId()){
                 case R.id.check:
                     storageUpload();
                     break;
@@ -146,7 +146,7 @@ public class WritePostActivity extends BasicActivity {
                     myStartActivity(GalleryActivity.class, "video", 0);
                     break;
                 case R.id.buttonsBackgroundLayout:
-                    if(buttonsBackgroundLayout.getVisibility() == View.VISIBLE) {
+                    if(buttonsBackgroundLayout.getVisibility() == View.VISIBLE){
                         buttonsBackgroundLayout.setVisibility(View.GONE);
                     }
                     break;
@@ -169,16 +169,16 @@ public class WritePostActivity extends BasicActivity {
     View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
         @Override
         public void onFocusChange(View v, boolean hasFocus) {
-            if(hasFocus) {
+            if(hasFocus){
                 selectedEditText = (EditText) v;
             }
         }
     };
 
     private void storageUpload() {
-        final String title = ((EditText)findViewById(R.id.titleEditText)).getText().toString();
+        final String title = ((EditText) findViewById(R.id.titleEditText)).getText().toString();
 
-        if(title.length() > 0) {
+        if (title.length() > 0) {
             loaderLayout.setVisibility(View.VISIBLE);
             final ArrayList<String> contentsList = new ArrayList<>();
             user = FirebaseAuth.getInstance().getCurrentUser();
@@ -187,21 +187,22 @@ public class WritePostActivity extends BasicActivity {
             FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance();
             final DocumentReference documentReference = firebaseFirestore.collection("posts").document();
 
-            for(int i = 0; i < parent.getChildCount(); i++) {
+            for(int i = 0; i < parent.getChildCount(); i++){
                 LinearLayout linearLayout = (LinearLayout)parent.getChildAt(i);
-                for(int ii = 0; ii < linearLayout.getChildCount(); ii++) {
+                for(int ii = 0; ii < linearLayout.getChildCount(); ii++){
                     View view = linearLayout.getChildAt(ii);
-                    if(view instanceof EditText) {
+                    if(view instanceof EditText){
                         String text = ((EditText)view).getText().toString();
-                        if(text.length() > 0) {
+                        if(text.length() > 0){
                             contentsList.add(text);
                         }
                     } else {
                         contentsList.add(pathList.get(pathCount));
-                        final StorageReference mountainImagesRef = storageRef.child("posts/" + documentReference.getId() + "/" + pathCount + ".jpg");
+                        String[] pathArray = pathList.get(pathCount).split("\\.");
+                        final StorageReference mountainImagesRef = storageRef.child("posts/" + documentReference.getId() + "/"+pathCount+"."+pathArray[pathArray.length - 1]);
                         try {
                             InputStream stream = new FileInputStream(new File(pathList.get(pathCount)));
-                            StorageMetadata metadata = new StorageMetadata.Builder().setCustomMetadata("index", ""+(contentsList.size()-1)).build();
+                            StorageMetadata metadata = new StorageMetadata.Builder().setCustomMetadata("index",""+(contentsList.size()-1)).build();
                             UploadTask uploadTask = mountainImagesRef.putStream(stream, metadata);
                             uploadTask.addOnFailureListener(new OnFailureListener() {
                                 @Override
@@ -217,26 +218,26 @@ public class WritePostActivity extends BasicActivity {
                                         public void onSuccess(Uri uri) {
                                             contentsList.set(index, uri.toString());
                                             successCount++;
-                                            if(pathList.size() == successCount) {
+                                            if(pathList.size() == successCount){
                                                 //완료
                                                 PostInfo postInfo = new PostInfo(title, contentsList, user.getUid(), new Date());
                                                 storeUpload(documentReference, postInfo);
-                                                for(int a = 0; a < contentsList.size(); a++) {
-                                                    Log.e("로그", "컨텐츠 : " + contentsList.get(a));
+                                                for(int a = 0; a < contentsList.size(); a++){
+                                                    Log.e("로그: ","콘덴츠: "+contentsList.get(a));
                                                 }
                                             }
                                         }
                                     });
                                 }
                             });
-                        } catch(FileNotFoundException e) {
-                            Log.e("로그", "에러 : " + e.toString());
+                        } catch (FileNotFoundException e) {
+                            Log.e("로그", "에러: " + e.toString());
                         }
                         pathCount++;
                     }
                 }
             }
-            if(pathList.size() == 0) {
+            if(pathList.size() == 0){
                 PostInfo postInfo = new PostInfo(title, contentsList, user.getUid(), new Date());
                 storeUpload(documentReference, postInfo);
             }
@@ -245,27 +246,27 @@ public class WritePostActivity extends BasicActivity {
         }
     }
 
-    private void storeUpload(DocumentReference documentReference, PostInfo postInfo) {
+    private void storeUpload(DocumentReference documentReference, PostInfo postInfo){
         documentReference.set(postInfo)
-            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                @Override
-                public void onSuccess(Void aVoid) {
-                    Log.d(TAG, "DocumentSnapshot successfully written!");
-                    loaderLayout.setVisibility(View.GONE);
-                    finish();
-                }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.w(TAG, "Error writing document", e);
-                    loaderLayout.setVisibility(View.GONE);
-                }
-            });
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(TAG, "DocumentSnapshot successfully written!");
+                        loaderLayout.setVisibility(View.GONE);
+                        finish();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Error writing document", e);
+                        loaderLayout.setVisibility(View.GONE);
+                    }
+                });
     }
 
     private void startToast(String msg) {
-        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private void myStartActivity(Class c, String media, int requestCode) {

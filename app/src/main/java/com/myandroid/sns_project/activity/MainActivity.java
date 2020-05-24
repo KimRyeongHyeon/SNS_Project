@@ -20,9 +20,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.myandroid.sns_project.PostInfo;
@@ -36,31 +38,28 @@ import java.util.Date;
 public class MainActivity extends BasicActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
     private static final String TAG = "MainActivity";
-
-    private int PERMISSION_ALL = 1;
-    private View mLayout;
-    String[] PERMISSIONS = {
-            Manifest.permission.CAMERA
-    };
+    private FirebaseUser firebaseUser;
+    private FirebaseFirestore firebaseFirestore;
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        if(FirebaseAuth.getInstance().getCurrentUser() == null) {
+        if (firebaseUser == null) {
             myStartActivity(SignUpActivity.class);
         } else {
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            DocumentReference docRef = db.collection("users").document(user.getUid());
-            docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            firebaseFirestore = FirebaseFirestore.getInstance();
+            DocumentReference documentReference = firebaseFirestore.collection("users").document(firebaseUser.getUid());
+            documentReference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                     if (task.isSuccessful()) {
                         DocumentSnapshot document = task.getResult();
-                        if(document != null) {
+                        if (document != null) {
                             if (document.exists()) {
                                 Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                             } else {
@@ -73,9 +72,21 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
                     }
                 }
             });
+        }
 
-            db.collection("posts")
-                    .get()
+        recyclerView = findViewById(R.id.recyclerView);
+        findViewById(R.id.floatingActionButton).setOnClickListener(onClickListener);
+
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+    }
+
+    protected void onResume() {
+        super.onResume();
+
+        if (firebaseUser != null) {
+            CollectionReference collectionReference = firebaseFirestore.collection("posts");
+            collectionReference.orderBy("createdAt", Query.Direction.DESCENDING).get()
                     .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -89,9 +100,6 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
                                             document.getData().get("publisher").toString(),
                                             new Date(document.getDate("createdAt").getTime())));
                                 }
-                                RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-                                recyclerView.setHasFixedSize(true);
-                                recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
 
                                 RecyclerView.Adapter mAdapter = new MainAdapter(MainActivity.this, postList);
                                 recyclerView.setAdapter(mAdapter);
@@ -100,75 +108,28 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
                             }
                         }
                     });
-
-
-        }
-
-//        findViewById(R.id.logoutButton).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                switch (v.getId()) {
-//                    case R.id.logoutButton:
-//                        FirebaseAuth.getInstance().signOut();
-//                        myStartActivity(SignUpActivity.class);
-//                        break;
-//                }
-//            }
-//        });
-
-        findViewById(R.id.floatingActionButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.floatingActionButton:
-                        myStartActivity(WritePostActivity.class);
-                        break;
-                }
-            }
-        });
-
-
-
-
-
-
-        //퍼미션
-        mLayout = findViewById(R.id.layout_main);
-
-        if(!hasPermissions(this, PERMISSIONS)) {
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
     }
 
-    public boolean hasPermissions(Context context, String... permissions) {
-        if(context != null && permissions != null) {
-            for(String permission : permissions) {
-                if(ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
-                }
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                /*
+                case R.id.logoutButton:
+                    FirebaseAuth.getInstance().signOut();
+                    myStartActivity(SignUpActivity.class);
+                    break;
+                */
+                case R.id.floatingActionButton:
+                    myStartActivity(WritePostActivity.class);
+                    break;
             }
         }
-        return true;
-
-    }
+    };
 
     private void myStartActivity(Class c) {
         Intent intent = new Intent(this, c);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
-    }
-
-    //퍼미션
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(ActivityCompat.shouldShowRequestPermissionRationale(this, PERMISSIONS[0])) {
-            Snackbar.make(mLayout, "퍼미션이 거부되었습니다. 앱을 다시 실행하여 퍼미션을 허용해주세요. ", Snackbar.LENGTH_INDEFINITE).setAction("확인", new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    finish();
-                }
-            }).show();
-        }
     }
 }

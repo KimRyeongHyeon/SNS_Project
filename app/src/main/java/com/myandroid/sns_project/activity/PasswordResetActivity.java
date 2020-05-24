@@ -29,17 +29,19 @@ public class PasswordResetActivity extends BasicActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.sendButton:
-                        send();
-                        break;
-                }
-            }
-        });
+        findViewById(R.id.sendButton).setOnClickListener(onClickListener);
     }
+
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.sendButton:
+                    send();
+                    break;
+            }
+        }
+    };
 
     private void send() {
         String email = ((EditText) findViewById(R.id.emailEditText)).getText().toString();
@@ -57,11 +59,11 @@ public class PasswordResetActivity extends BasicActivity {
                         }
                     });
         } else {
-            startToast("이메일을 입력해주세요.");
+            startToast("이메일을 입력해 주세요.");
         }
     }
 
     private void startToast(String msg) {
-        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }

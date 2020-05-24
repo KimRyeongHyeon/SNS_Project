@@ -57,100 +57,73 @@ public class MemberInitActivity extends BasicActivity {
 
         loaderLayout = findViewById(R.id.loaderLayout);
         profileImageView = findViewById(R.id.profileImageView);
+        profileImageView.setOnClickListener(onClickListener);
 
-        findViewById(R.id.checkButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.checkButton:
-                        storageUploader();
-                        break;
-                }
-            }
-        });
-
-        findViewById(R.id.profileImageView).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.profileImageView:
-                        CardView cardView = findViewById(R.id.buttonsCardView);
-                        if(cardView.getVisibility() == View.VISIBLE) {
-                            cardView.setVisibility(View.GONE);
-                        } else {
-                            cardView.setVisibility(View.VISIBLE);
-                        }
-                        break;
-                }
-            }
-        });
-
-        findViewById(R.id.picture).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.picture:
-                        myStartActivity(CameraActivity.class);
-                        break;
-                }
-            }
-        });
-
-        findViewById(R.id.gallery).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.gallery:
-                        if (ContextCompat.checkSelfPermission(MemberInitActivity.this,
-                                Manifest.permission.READ_EXTERNAL_STORAGE)
-                                != PackageManager.PERMISSION_GRANTED) {
-
-                            if (ActivityCompat.shouldShowRequestPermissionRationale(MemberInitActivity.this,
-                                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
-
-                                ActivityCompat.requestPermissions(MemberInitActivity.this,
-                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                                        1);
-                            } else {
-                                startToast("권한을 허용해 주세요.");
-                            }
-                        } else {
-                            myStartActivity(GalleryActivity.class);
-                        }
-                        break;
-                }
-            }
-        });
+        findViewById(R.id.checkButton).setOnClickListener(onClickListener);
+        findViewById(R.id.picture).setOnClickListener(onClickListener);
+        findViewById(R.id.gallery).setOnClickListener(onClickListener);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case 1: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    myStartActivity(GalleryActivity.class);
-                } else {
-                    startToast("권한을 허용해 주세요.");
+            case 0: {
+                if (resultCode == Activity.RESULT_OK) {
+                    profilePath = data.getStringExtra("profilePath");
+                    Glide.with(this).load(profilePath).centerCrop().override(500).into(profileImageView);
                 }
+                break;
             }
         }
     }
 
-    private void storageUploader() {
-        final String name = ((EditText)findViewById(R.id.nameEditText)).getText().toString();
-        final String phone = ((EditText)findViewById(R.id.phoneEditText)).getText().toString();
-        final String birth = ((EditText)findViewById(R.id.birthEditText)).getText().toString();
-        final String address = ((EditText)findViewById(R.id.addressEditText)).getText().toString();
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.checkButton:
+                    storageUploader();
+                    break;
+                case R.id.profileImageView:
+                    CardView cardView = findViewById(R.id.buttonsCardView);
+                    if (cardView.getVisibility() == View.VISIBLE) {
+                        cardView.setVisibility(View.GONE);
+                    } else {
+                        cardView.setVisibility(View.VISIBLE);
+                    }
+                    break;
+                case R.id.picture:
+                    myStartActivity(CameraActivity.class);
+                    break;
+                case R.id.gallery:
+                    myStartActivity(GalleryActivity.class);
+                    break;
+            }
+        }
+    };
 
-        if(name.length() > 0 && phone.length() > 9 && birth.length() > 5 && address.length() > 0) {
+    private void storageUploader() {
+        final String name = ((EditText) findViewById(R.id.nameEditText)).getText().toString();
+        final String phoneNumber = ((EditText) findViewById(R.id.phoneEditText)).getText().toString();
+        final String birthDay = ((EditText) findViewById(R.id.birthEditText)).getText().toString();
+        final String address = ((EditText) findViewById(R.id.addressEditText)).getText().toString();
+
+        if (name.length() > 0 && phoneNumber.length() > 9 && birthDay.length() > 5 && address.length() > 0) {
             loaderLayout.setVisibility(View.VISIBLE);
             FirebaseStorage storage = FirebaseStorage.getInstance();
             StorageReference storageRef = storage.getReference();
             user = FirebaseAuth.getInstance().getCurrentUser();
             final StorageReference mountainImagesRef = storageRef.child("users/" + user.getUid() + "/profileImage.jpg");
 
-            if(profilePath == null) {
-                MemberInfo memberInfo = new MemberInfo(name, phone, birth, address);
+            if (profilePath == null) {
+                MemberInfo memberInfo = new MemberInfo(name, phoneNumber, birthDay, address);
                 storeUploader(memberInfo);
             } else {
                 try {
@@ -162,7 +135,6 @@ public class MemberInitActivity extends BasicActivity {
                             if (!task.isSuccessful()) {
                                 throw task.getException();
                             }
-
                             return mountainImagesRef.getDownloadUrl();
                         }
                     }).addOnCompleteListener(new OnCompleteListener<Uri>() {
@@ -171,15 +143,15 @@ public class MemberInitActivity extends BasicActivity {
                             if (task.isSuccessful()) {
                                 Uri downloadUri = task.getResult();
 
-                                MemberInfo memberInfo = new MemberInfo(name, phone, birth, address, downloadUri.toString());
+                                MemberInfo memberInfo = new MemberInfo(name, phoneNumber, birthDay, address, downloadUri.toString());
                                 storeUploader(memberInfo);
                             } else {
-                                startToast("회원정보를 보내는데 실패했습니다.");
+                                startToast("회원정보를 보내는데 실패하였습니다.");
                             }
                         }
                     });
-                } catch(FileNotFoundException e) {
-                    Log.e("로그", "에러 : " + e.toString());
+                } catch (FileNotFoundException e) {
+                    Log.e("로그", "에러: " + e.toString());
                 }
             }
         } else {
@@ -203,32 +175,13 @@ public class MemberInitActivity extends BasicActivity {
                     public void onFailure(@NonNull Exception e) {
                         startToast("회원정보 등록에 실패하였습니다.");
                         loaderLayout.setVisibility(View.GONE);
+                        Log.w(TAG, "Error writing document", e);
                     }
                 });
     }
 
     private void startToast(String msg) {
-        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case 0: {
-                if (resultCode == Activity.RESULT_OK) {
-                    profilePath = data.getStringExtra("profilePath");
-                    Glide.with(this).load(profilePath).centerCrop().override(500).into(profileImageView);
-                }
-                break;
-            }
-        }
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private void myStartActivity(Class c) {

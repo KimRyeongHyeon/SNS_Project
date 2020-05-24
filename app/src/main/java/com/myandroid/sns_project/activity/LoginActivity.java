@@ -28,34 +28,29 @@ public class LoginActivity extends BasicActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        findViewById(R.id.loginButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.loginButton:
-                        login();
-                        break;
-                }
-            }
-        });
-
-        findViewById(R.id.gotoPasswordResetButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.gotoPasswordResetButton:
-                        myStartActivity(PasswordResetActivity.class);
-                        break;
-                }
-            }
-        });
+        findViewById(R.id.loginButton).setOnClickListener(onClickListener);
+        findViewById(R.id.gotoPasswordResetButton).setOnClickListener(onClickListener);
     }
 
-    private void login() {
-        String email = ((EditText)findViewById(R.id.emailEditText)).getText().toString();
-        String password = ((EditText)findViewById(R.id.passwordEditText)).getText().toString();
+    View.OnClickListener onClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()) {
+                case R.id.loginButton:
+                    login();
+                    break;
+                case R.id.gotoPasswordResetButton:
+                    myStartActivity(PasswordResetActivity.class);
+                    break;
+            }
+        }
+    };
 
-        if(email.length() > 0 && password.length() > 0) {
+    private void login() {
+        String email = ((EditText) findViewById(R.id.emailEditText)).getText().toString();
+        String password = ((EditText) findViewById(R.id.passwordEditText)).getText().toString();
+
+        if (email.length() > 0 && password.length() > 0) {
             final RelativeLayout loaderLayout = findViewById(R.id.loaderLayout);
             loaderLayout.setVisibility(View.VISIBLE);
             mAuth.signInWithEmailAndPassword(email, password)
@@ -64,24 +59,23 @@ public class LoginActivity extends BasicActivity {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             loaderLayout.setVisibility(View.GONE);
                             if (task.isSuccessful()) {
-                                // Sign in success, update UI with the signed-in user's information
                                 FirebaseUser user = mAuth.getCurrentUser();
-                                startToast("로그인을 성공하였습니다!");
+                                startToast("로그인에 성공하였습니다.");
                                 myStartActivity(MainActivity.class);
                             } else {
-                                if(task.getException() != null) {
+                                if (task.getException() != null) {
                                     startToast(task.getException().toString());
                                 }
                             }
                         }
                     });
         } else {
-            startToast("이메일 또는 비밀번호를 입력해주세요.");
+            startToast("이메일 또는 비밀번호를 입력해 주세요.");
         }
     }
 
     private void startToast(String msg) {
-        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private void myStartActivity(Class c) {
