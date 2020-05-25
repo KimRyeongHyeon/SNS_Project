@@ -1,15 +1,20 @@
 package com.myandroid.sns_project;
 
 import android.app.Activity;
+import android.util.Patterns;
 import android.widget.Toast;
 
 public class Util {
-    private Activity activity;
-
-    public Util(Activity activity) {
-        this.activity = activity;
-    }
-    public void showToast(String msg) {
+    public Util() {}
+    public static void showToast(Activity activity, String msg) {
         Toast.makeText(activity, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public static boolean isStorageUrl(String url){
+        return Patterns.WEB_URL.matcher(url).matches() && url.contains("https://firebasestorage.googleapis.com/v0/b/sns-project-43f7e.appspot.com/o/posts");
+    }
+
+    public static String storageUrlToName(String url){
+        return url.split("\\?")[0].split("%2F")[url.split("\\?")[0].split("%2F").length - 1];
     }
 }

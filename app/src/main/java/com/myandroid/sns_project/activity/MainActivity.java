@@ -2,29 +2,18 @@ package com.myandroid.sns_project.activity;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -38,13 +27,15 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.myandroid.sns_project.PostInfo;
 import com.myandroid.sns_project.R;
-import com.myandroid.sns_project.Util;
-import com.myandroid.sns_project.adapter.GalleryAdapter;
 import com.myandroid.sns_project.adapter.MainAdapter;
 import com.myandroid.sns_project.listener.OnPostListener;
 
 import java.util.ArrayList;
 import java.util.Date;
+
+import static com.myandroid.sns_project.Util.isStorageUrl;
+import static com.myandroid.sns_project.Util.showToast;
+import static com.myandroid.sns_project.Util.storageUrlToName;
 
 public class MainActivity extends BasicActivity implements ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -53,7 +44,6 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
     private FirebaseFirestore firebaseFirestore;
     private MainAdapter mainAdapter;
     private ArrayList<PostInfo> postList;
-    private Util util;
     private StorageReference storageRef;
     private int successCount;
 
@@ -91,7 +81,6 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
             });
         }
 
-        util = new Util(this);
         postList = new ArrayList<>();
         mainAdapter = new MainAdapter(MainActivity.this, postList);
         mainAdapter.setOnPostListener(onPostListener);
@@ -115,14 +104,11 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
         public void onDelete(int position) {
             final String id = postList.get(position).getId();
             ArrayList<String> contentsList = postList.get(position).getContents();
-            for (int i = 0; i < contentsList.size(); i++ ){
+            for (int i = 0; i < contentsList.size(); i++) {
                 String contents = contentsList.get(i);
-                if(Patterns.WEB_URL.matcher(contents).matches() && contents.contains("https://firebasestorage.googleapis.com/v0/b/sns-project-43f7e.appspot.com/o/posts")){
+                if (isStorageUrl(contents)) {
                     successCount++;
-                    String[] list = contents.split("\\?");
-                    String[] list2 = list[0].split("%2F");
-                    String name = list2[list2.length - 1];
-                    StorageReference desertRef = storageRef.child("posts/" + id + "/" + name);
+                    StorageReference desertRef = storageRef.child("posts/" + id + storageUrlToName(contents));
                     desertRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
@@ -132,7 +118,7 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
                     }).addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
-                            util.showToast("ERROR");
+                            showToast(MainActivity.this, "ERROR");
                         }
                     });
                 }
@@ -191,20 +177,20 @@ public class MainActivity extends BasicActivity implements ActivityCompat.OnRequ
     }
 
     private void storeUploader(String id) {
-        if(successCount == 0) {
+        if (successCount == 0) {
             firebaseFirestore.collection("posts").document(id)
                     .delete()
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            util.showToast("게시글을 삭제하였습니다.");
+                            showToast(MainActivity.this, "게시글을 삭제하였습니다.");
                             postUpdate();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            util.showToast("게시글을 삭제하지 못하였습니다.");
+                            showToast(MainActivity.this, "게시글을 삭제하지 못하였습니다.");
                         }
                     });
         }

@@ -1,6 +1,7 @@
 package com.myandroid.sns_project.adapter;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -22,8 +23,10 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.myandroid.sns_project.PostActivity;
 import com.myandroid.sns_project.PostInfo;
 import com.myandroid.sns_project.R;
+import com.myandroid.sns_project.Util;
 import com.myandroid.sns_project.listener.OnPostListener;
 
 import java.text.SimpleDateFormat;
@@ -64,7 +67,9 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent intent = new Intent(activity, PostActivity.class);
+                intent.putExtra("postInfo", mDataset.get(mainViewHolder.getAdapterPosition()));
+                activity.startActivity(intent);
             }
         });
 
@@ -104,7 +109,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
                         break;
                     }
                 String contents = contentsList.get(i);
-                if(Patterns.WEB_URL.matcher(contents).matches() && contents.contains("https://firebasestorage.googleapis.com/v0/b/sns-project-43f7e.appspot.com/o/posts")){
+                if(Util.isStorageUrl(contents)){
                     ImageView imageView = new ImageView(activity);
                     imageView.setLayoutParams(layoutParams);
                     imageView.setAdjustViewBounds(true);

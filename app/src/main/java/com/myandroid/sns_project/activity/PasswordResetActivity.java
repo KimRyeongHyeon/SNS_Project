@@ -1,22 +1,17 @@
 package com.myandroid.sns_project.activity;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.myandroid.sns_project.R;
+
+import static com.myandroid.sns_project.Util.showToast;
 
 public class PasswordResetActivity extends BasicActivity {
 
@@ -54,16 +49,12 @@ public class PasswordResetActivity extends BasicActivity {
                         public void onComplete(@NonNull Task<Void> task) {
                             loaderLayout.setVisibility(View.GONE);
                             if (task.isSuccessful()) {
-                                startToast("이메일을 보냈습니다.");
+                                showToast(PasswordResetActivity.this, "이메일을 보냈습니다.");
                             }
                         }
                     });
         } else {
-            startToast("이메일을 입력해 주세요.");
+            showToast(PasswordResetActivity.this, "이메일을 입력해 주세요.");
         }
-    }
-
-    private void startToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 }
