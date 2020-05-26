@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+import static com.myandroid.sns_project.Util.INTENT_PATH;
 import static com.myandroid.sns_project.Util.showToast;
 
 public class MemberInitActivity extends BasicActivity {
@@ -42,14 +43,19 @@ public class MemberInitActivity extends BasicActivity {
     private RelativeLayout loaderLayout;
     private String profilePath;
     private FirebaseUser user;
+    private RelativeLayout buttonBackgroundLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_member_init);
+        setToolbarTitle("회원정보");
 
         loaderLayout = findViewById(R.id.loaderLayout);
         profileImageView = findViewById(R.id.profileImageView);
+        buttonBackgroundLayout = findViewById(R.id.buttonsBackgroundLayout);
+
+        buttonBackgroundLayout.setOnClickListener(onClickListener);
         profileImageView.setOnClickListener(onClickListener);
 
         findViewById(R.id.checkButton).setOnClickListener(onClickListener);
@@ -69,8 +75,9 @@ public class MemberInitActivity extends BasicActivity {
         switch (requestCode) {
             case 0: {
                 if (resultCode == Activity.RESULT_OK) {
-                    profilePath = data.getStringExtra("profilePath");
+                    profilePath = data.getStringExtra(INTENT_PATH);
                     Glide.with(this).load(profilePath).centerCrop().override(500).into(profileImageView);
+                    buttonBackgroundLayout.setVisibility(View.GONE);
                 }
                 break;
             }
@@ -85,12 +92,10 @@ public class MemberInitActivity extends BasicActivity {
                     storageUploader();
                     break;
                 case R.id.profileImageView:
-                    CardView cardView = findViewById(R.id.buttonsCardView);
-                    if (cardView.getVisibility() == View.VISIBLE) {
-                        cardView.setVisibility(View.GONE);
-                    } else {
-                        cardView.setVisibility(View.VISIBLE);
-                    }
+                    buttonBackgroundLayout.setVisibility(View.VISIBLE);
+                    break;
+                case R.id.buttonsBackgroundLayout:
+                    buttonBackgroundLayout.setVisibility(View.GONE);
                     break;
                 case R.id.picture:
                     myStartActivity(CameraActivity.class);

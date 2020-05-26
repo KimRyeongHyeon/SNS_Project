@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ImageView
-    android:id="@+id/contentsImageView"
+<com.google.android.exoplayer2.ui.PlayerView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ContentsPlayer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:adjustViewBounds="true"
-    android:maxHeight="700dp"
-    android:scaleType="fitXY">
-
-</ImageView>
+    android:maxHeight="700dp" />

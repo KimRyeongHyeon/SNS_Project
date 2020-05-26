@@ -38,7 +38,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static com.myandroid.sns_project.Util.GALLERY_IMAGE;
+import static com.myandroid.sns_project.Util.GALLERY_VIDEO;
+import static com.myandroid.sns_project.Util.INTENT_MEDIA;
+import static com.myandroid.sns_project.Util.INTENT_PATH;
+import static com.myandroid.sns_project.Util.isImageFile;
 import static com.myandroid.sns_project.Util.isStorageUrl;
+import static com.myandroid.sns_project.Util.isVideoFile;
 import static com.myandroid.sns_project.Util.showToast;
 import static com.myandroid.sns_project.Util.storageUrlToName;
 
@@ -63,6 +69,7 @@ public class WritePostActivity extends BasicActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write_post);
+        setToolbarTitle("게시글 작성");
 
         parent = findViewById(R.id.contentsLayout);
         buttonsBackgroundLayout = findViewById(R.id.buttonsBackgroundLayout);
@@ -101,8 +108,8 @@ public class WritePostActivity extends BasicActivity {
         switch (requestCode) {
             case 0:
                 if (resultCode == Activity.RESULT_OK) {
-                    String profilePath = data.getStringExtra("profilePath");
-                    pathList.add(profilePath);
+                    String path = data.getStringExtra(INTENT_PATH);
+                    pathList.add(path);
 
                     ContentsItemView contentsItemView = new ContentsItemView(this);
 
@@ -117,7 +124,7 @@ public class WritePostActivity extends BasicActivity {
                         }
                     }
 
-                    contentsItemView.setImage(profilePath);
+                    contentsItemView.setImage(path);
                     contentsItemView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -131,9 +138,9 @@ public class WritePostActivity extends BasicActivity {
                 break;
             case 1:
                 if (resultCode == Activity.RESULT_OK) {
-                    String profilePath = data.getStringExtra("profilePath");
-                    pathList.set(parent.indexOfChild((View) selectedImageView.getParent()) - 1, profilePath);
-                    Glide.with(this).load(profilePath).override(1000).into(selectedImageView);
+                    String path = data.getStringExtra(INTENT_PATH);
+                    pathList.set(parent.indexOfChild((View) selectedImageView.getParent()) - 1, path);
+                    Glide.with(this).load(path).override(1000).into(selectedImageView);
                 }
                 break;
         }
@@ -147,10 +154,10 @@ public class WritePostActivity extends BasicActivity {
                     storageUpload();
                     break;
                 case R.id.image:
-                    myStartActivity(GalleryActivity.class, "image", 0);
+                    myStartActivity(GalleryActivity.class, GALLERY_IMAGE, 0);
                     break;
                 case R.id.video:
-                    myStartActivity(GalleryActivity.class, "video", 0);
+                    myStartActivity(GalleryActivity.class, GALLERY_VIDEO, 0);
                     break;
                 case R.id.buttonsBackgroundLayout:
                     if (buttonsBackgroundLayout.getVisibility() == View.VISIBLE) {
@@ -158,30 +165,37 @@ public class WritePostActivity extends BasicActivity {
                     }
                     break;
                 case R.id.imageModify:
-                    myStartActivity(GalleryActivity.class, "image", 1);
+                    myStartActivity(GalleryActivity.class, GALLERY_IMAGE, 1);
                     buttonsBackgroundLayout.setVisibility(View.GONE);
                     break;
                 case R.id.videoModify:
-                    myStartActivity(GalleryActivity.class, "video", 1);
+                    myStartActivity(GalleryActivity.class, GALLERY_VIDEO, 1);
                     buttonsBackgroundLayout.setVisibility(View.GONE);
                     break;
                 case R.id.delete:
                     final View selectedView = (View) selectedImageView.getParent();
-                    StorageReference desertRef = storageRef.child("posts/" + postInfo.getId() + "/" + storageUrlToName(pathList.get(parent.indexOfChild(selectedView) - 1)));
-                    desertRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            showToast(WritePostActivity.this, "파일을 삭제하였습니다.");
-                            pathList.remove(parent.indexOfChild(selectedView) - 1);
-                            parent.removeView(selectedView);
-                            buttonsBackgroundLayout.setVisibility(View.GONE);
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception exception) {
-                            showToast(WritePostActivity.this, "파일을 삭제하는데 실패하였습니다.");
-                        }
-                    });
+                    String path = pathList.get(parent.indexOfChild(selectedView) - 1);
+                    if(isStorageUrl(path)) {
+                        StorageReference desertRef = storageRef.child("posts/" + postInfo.getId() + "/" + storageUrlToName(path));
+                        desertRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                showToast(WritePostActivity.this, "파일을 삭제하였습니다.");
+                                pathList.remove(parent.indexOfChild(selectedView) - 1);
+                                parent.removeView(selectedView);
+                                buttonsBackgroundLayout.setVisibility(View.GONE);
+                            }
+                        }).addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception exception) {
+                                showToast(WritePostActivity.this, "파일을 삭제하는데 실패하였습니다.");
+                            }
+                        });
+                    } else {
+                        pathList.remove(parent.indexOfChild(selectedView) - 1);
+                        parent.removeView(selectedView);
+                        buttonsBackgroundLayout.setVisibility(View.GONE);
+                    }
                     break;
             }
         }
@@ -202,6 +216,7 @@ public class WritePostActivity extends BasicActivity {
         if (title.length() > 0) {
             loaderLayout.setVisibility(View.VISIBLE);
             final ArrayList<String> contentsList = new ArrayList<>();
+            final ArrayList<String> formatList = new ArrayList<>();
             user = FirebaseAuth.getInstance().getCurrentUser();
             FirebaseStorage storage = FirebaseStorage.getInstance();
             StorageReference storageRef = storage.getReference();
@@ -216,11 +231,21 @@ public class WritePostActivity extends BasicActivity {
                         String text = ((EditText) view).getText().toString();
                         if (text.length() > 0) {
                             contentsList.add(text);
+                            formatList.add("text");
                         }
                     } else if (!isStorageUrl(pathList.get(pathCount))) {
                         String path = pathList.get(pathCount);
                         successCount++;
                         contentsList.add(path);
+
+                        if(isImageFile(path)) {
+                            formatList.add("image");
+                        } else if(isVideoFile(path)) {
+                            formatList.add("video");
+                        } else {
+                            formatList.add("text");
+                        }
+
                         String[] pathArray = path.split("\\.");
                         final StorageReference mountainImagesRef = storageRef.child("posts/" + documentReference.getId() + "/" + pathCount + "." + pathArray[pathArray.length - 1]);
                         try {
@@ -241,7 +266,7 @@ public class WritePostActivity extends BasicActivity {
                                             successCount--;
                                             contentsList.set(index, uri.toString());
                                             if (successCount == 0) {
-                                                PostInfo postInfo = new PostInfo(title, contentsList, user.getUid(), date);
+                                                PostInfo postInfo = new PostInfo(title, contentsList, formatList, user.getUid(), date);
                                                 storeUpload(documentReference, postInfo);
                                             }
                                         }
@@ -256,19 +281,22 @@ public class WritePostActivity extends BasicActivity {
                 }
             }
             if (successCount == 0) {
-                storeUpload(documentReference, new PostInfo(title, contentsList, user.getUid(), date));
+                storeUpload(documentReference, new PostInfo(title, contentsList, formatList, user.getUid(), date));
             }
         } else {
             showToast(WritePostActivity.this, "제목을 입력해주세요.");
         }
     }
 
-    private void storeUpload(DocumentReference documentReference, PostInfo postInfo) {
+    private void storeUpload(DocumentReference documentReference, final PostInfo postInfo) {
         documentReference.set(postInfo.getPostInfo())
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Log.d(TAG, "DocumentSnapshot successfully written!");
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("postInfo", postInfo);
+                        setResult(Activity.RESULT_OK, resultIntent);
                         loaderLayout.setVisibility(View.GONE);
                         finish();
                     }
@@ -316,9 +344,9 @@ public class WritePostActivity extends BasicActivity {
         }
     }
 
-    private void myStartActivity(Class c, String media, int requestCode) {
+    private void myStartActivity(Class c, int media, int requestCode) {
         Intent intent = new Intent(this, c);
-        intent.putExtra("media", media);
+        intent.putExtra(INTENT_MEDIA, media);
         startActivityForResult(intent, requestCode);
     }
 }
